@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Oduncu Oyunu</title>
+    <meta name="description" content="Hızlı refleks ve dikkat gerektiren retro arcade oduncu oyunu. Ağaç dallarından kaçarak rekor kırın!" />
+    <meta property="og:title" content="Oduncu Oyunu" />
+    <meta property="og:description" content="Hızlı refleks ve dikkat gerektiren retro arcade oduncu oyunu. Ağaç dallarından kaçarak rekor kırın!" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- 2D Canvas Oyunu -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Başlangıç İpucu -->
+      <div id="start-prompt" class="start-prompt">
+        <h3>🪓 ODUNU KESMEYE BAŞLA!</h3>
+        <p>Sol veya Sağ vuruş yaparak başla</p>
+      </div>
+
+      <!-- Kullanıcı Arayüzü Katmanı (HUD) -->
+      <div id="ui-overlay">
+        <!-- Üst Başlık & Butonlar -->
+        <div class="top-hud">
+          <div class="hud-header">
+            <div class="brand-badge">
+              <span class="brand-icon">🌲</span>
+              <span class="brand-title">ODUNCU</span>
+            </div>
+
+            <div class="hud-actions">
+              <button id="btn-sound" class="icon-btn" title="Sesi Aç/Kapat">🔊</button>
+              <button id="btn-skins" class="icon-btn" title="Karakterler">🪓</button>
+              <button id="btn-stats" class="icon-btn" title="İstatistikler">🏆</button>
+              <button id="btn-help" class="icon-btn" title="Nasıl Oynanır?">❓</button>
+            </div>
+          </div>
+
+          <!-- Enerji / Süre Barı -->
+          <div class="timer-bar-container">
+            <div id="timer-bar" class="timer-bar-fill"></div>
+            <div class="timer-bar-decor">SÜRE</div>
+          </div>
+
+          <!-- Skor Göstergesi -->
+          <div class="score-board">
+            <div id="score-display" class="score-display">0</div>
+            <div id="combo-badge" class="combo-badge">x2 KOMBO!</div>
+          </div>
+        </div>
+
+        <!-- Alt Vuruş Düğmeleri (Dokunmatik ve Tıklama) -->
+        <div class="bottom-controls">
+          <button id="btn-left" class="chop-btn" aria-label="Sol Kesim">
+            <span class="btn-arrow">◀</span>
+            <span class="btn-label">SOL KES</span>
+            <span class="btn-keyhint">← VEYA A</span>
+          </button>
+
+          <button id="btn-right" class="chop-btn" aria-label="Sağ Kesim">
+            <span class="btn-arrow">▶</span>
+            <span class="btn-label">SAĞ KES</span>
+            <span class="btn-keyhint">D VEYA →</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: OYUN BİTTİ (GAME OVER) -->
+    <div id="modal-gameover" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2 id="gameover-title" class="modal-title">💥 Dal Çarptı!</h2>
+        </div>
+
+        <div class="gameover-stats">
+          <div class="stat-card featured">
+            <div class="stat-label">Toplam Skor</div>
+            <div id="gameover-score" class="stat-value">0</div>
+            <div id="new-record-tag" class="new-record-tag" style="display: none;">YENİ REKOR! 🎉</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">En Yüksek Skor</div>
+            <div id="gameover-best" class="stat-value">0</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">En Yüksek Kombo</div>
+            <div id="gameover-combo" class="stat-value">0</div>
+          </div>
+
+          <div class="stat-card" style="grid-column: span 2;">
+            <div class="stat-label">Toplam Kesilen Odun</div>
+            <div id="gameover-total" class="stat-value">0</div>
+          </div>
+        </div>
+
+        <button id="btn-restart" class="action-btn">
+          <span>🔄</span> TEKRAR OYNA (BOŞLUK)
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL: KARAKTERLER (SKINS) -->
+    <div id="modal-skins" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">🪓 Oduncu Karakterleri</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+        <p style="font-size: 0.85rem; color: #bcaaa4;">
+          Daha yüksek skorlara ulaşarak yeni oduncu karakterlerinin kilidini aç!
+        </p>
+        <div id="skins-grid" class="skins-grid">
+          <!-- Dinamik Karakter Kartları game.js tarafından oluşturulur -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: NASIL OYNANIR -->
+    <div id="modal-help" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">📖 Nasıl Oynanır?</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="guide-step">
+            <div class="guide-icon">🪵</div>
+            <div class="guide-text">
+              <h4>Ağacı Kes</h4>
+              <p>Klavyedeki <b>Sol Ok / A</b> veya <b>Sağ Ok / D</b> tuşlarına basarak ağacın ilgili tarafından odun kes.</p>
+            </div>
+          </div>
+
+          <div class="guide-step">
+            <div class="guide-icon">⚠️</div>
+            <div class="guide-text">
+              <h4>Dallara Dikkat Et!</h4>
+              <p>Yukarıdan inen dallar oduncunun kafasına çarparsa oyun biter! Zamanında karşı tarafa geç.</p>
+            </div>
+          </div>
+
+          <div class="guide-step">
+            <div class="guide-icon">⏳</div>
+            <div class="guide-text">
+              <h4>Süreyle Yarış</h4>
+              <p>Yukarıdaki enerji barı sürekli azalır. Her vuruş süreni tazeler. Hızlı vuruşlar yaparak barı dolu tut!</p>
+            </div>
+          </div>
+
+          <div class="guide-step">
+            <div class="guide-icon">🔥</div>
+            <div class="guide-text">
+              <h4>Kombo Çılgınlığı</h4>
+              <p>Hızlı ve tempolu vurdukça kombo çarpanı katlanır ve özel görsel efektler aktifleşir.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="action-btn secondary" data-close>ANLADIM, BAŞLA!</button>
+      </div>
+    </div>
+
+    <!-- MODAL: İSTATİSTİKLER -->
+    <div id="modal-stats" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">🏆 Oyuncu İstatistikleri</h3>
+          <button class="modal-close" data-close>&times;</button>
+        </div>
+
+        <div class="gameover-stats">
+          <div class="stat-card">
+            <div class="stat-label">En Yüksek Skor</div>
+            <div id="stat-high-score" class="stat-value">0</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Toplam Kesilen Odun</div>
+            <div id="stat-total-chops" class="stat-value">0</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">Oynanan Oyun</div>
+            <div id="stat-games-played" class="stat-value">0</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">En Uzun Kombo</div>
+            <div id="stat-longest-combo" class="stat-value">0</div>
+          </div>
+        </div>
+
+        <button class="action-btn secondary" data-close>KAPAT</button>
+      </div>
+    </div>
+
+    <!-- Saf JavaScript Kodu -->
+    <script src="./game.js"></script>
+  </body>
+</html>

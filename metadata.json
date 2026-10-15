@@ -1,0 +1,6 @@
+{
+  "name": "Oduncu Oyunu",
+  "description": "Hızlı refleks ve dikkat gerektiren retro arcade oduncu oyunu. Ağaç dallarından kaçarak rekor kırın!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
